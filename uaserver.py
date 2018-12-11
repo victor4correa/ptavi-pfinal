@@ -15,12 +15,8 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         line = self.rfile.read().decode('utf-8')
         contenido = line.split()
         print("El cliente nos manda " + line)
-        """
-        if len(contenido) != 4:
-            self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")
-       
-        else:
-         """
+
+
         if contenido[0] == "INVITE":
             if len(contenido) != 13:
                 self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")
@@ -31,7 +27,11 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         elif contenido[0] == "ACK":
                 os.system("mp32rtp -i 127.0.0.1 -p 23032 < " + FILE)
         elif contenido[0] == "BYE":
-            self.wfile.write(b"Terminando llamada\r\n\r\n")
+            if len(contenido) != 3:
+                self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")
+            else:
+                self.wfile.write(b"Terminando llamada\r\n\r\n")
+
         elif contenido[0] == "REGISTER":
             if len(contenido) != 4:
                 self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")

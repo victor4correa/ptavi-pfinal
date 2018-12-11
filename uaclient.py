@@ -67,6 +67,9 @@ if __name__=="__main__":
                 + "Content-Type: application/sdp\r\n\r\nv=0\r\no="
                 + USER + " " + SERVER + "\r\ns=VictorSession\r\nt=0\r\nm=audio " 
                 + AUDPORT + " RTP\r\n")
+    elif METHOD == "BYE":
+        LINE = (METHOD + " sip:" + USER + " SIP/2.0\r\n")
+
        # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
         my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
