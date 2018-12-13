@@ -78,6 +78,10 @@ if __name__=="__main__":
         my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
         data = my_socket.recv(1024)
         print(data.decode('utf-8'))
+        if METHOD == "INVITE":
+            my_socket.send(bytes("ACK sip:" + USER + " SIP/2.0", "utf-8")
+                           + b'\r\n')
+            data = my_socket.recv(1024)
     """
     
         # Contenido que vamos a enviar

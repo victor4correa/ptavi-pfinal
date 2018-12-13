@@ -1,6 +1,6 @@
 <config>
     <account username="sara@gmail.com" passwd="0203"/>
-    <uaserver ip="127.0.0.1" puerto ="6050"/>
+    <uaserver ip="127.0.0.1" puerto ="5060"/>
     <rtpaudio puerto="6002"/>
     <regproxy ip="127.0.0.1" puerto="1234"/>
     <log path="./fich_log(ua2).txt"/>
