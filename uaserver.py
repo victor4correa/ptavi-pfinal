@@ -69,12 +69,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             else:
                 self.wfile.write(b"Terminando llamada\r\n\r\n")
 
-        elif contenido[0] == "REGISTER":
-            if len(contenido) != 4:
-                self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")
-            else:
-                self.wfile.write(b"Registrando...")
-        elif contenido[0] != ["REGISTER", "INVITE", "BYE", "ACK"]:
+        elif contenido[0] != ["INVITE", "BYE", "ACK"]:
             self.wfile.write(b"SIP/2.0 405 Method Not Allowed\r\n\r\n")
 
 
@@ -96,8 +91,9 @@ if __name__ == "__main__":
     SERVER = datosconfig[1][1]["ip"]
     USER = datosconfig[0][1]["username"]
     AUDPORT = datosconfig[2][1]["puerto"]
+    PROXYPORT = datosconfig[3][1]["puerto"]
     # Creamos servidor de eco y escuchamos
-    serv = socketserver.UDPServer(('', int(PORT)), EchoHandler)
+    serv = socketserver.UDPServer(('', int(PROXYPORT)), EchoHandler)
     print("Listening...")
     serv.serve_forever()
     
