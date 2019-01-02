@@ -4,13 +4,23 @@
 
 import socket
 import sys
+import time
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
 # Cliente UDP simple.
 
+
+def log(event):
+    event = (" ").join(event.split())
+    tiempo = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
+    linelog = tiempo + " " + event + "\n"
+    with open(PATHLOG, "a") as file_log:
+        file_log.write(linelog)
+        
+
 class ClientHandler(ContentHandler):
     
-    
+        
     def __init__(self):
         atb_account = {"username": "", "passwd": ""}
         atb_uaserver = {"ip": "", "puerto": ""}
@@ -58,7 +68,10 @@ if __name__=="__main__":
     USER = datosconfig[0][1]["username"]
     AUDPORT = datosconfig[2][1]["puerto"]
     PROXYPORT = datosconfig[3][1]["puerto"]
-     
+    PATHLOG = datosconfig[4][1]["path"]
+    
+    log("Starting...")
+        
     if METHOD == "REGISTER":
         LINE = (METHOD + " sip:" + USER + " SIP/2.0\r\n" + "Expires:" 
                 + OPTION + "\r\n")
@@ -70,34 +83,24 @@ if __name__=="__main__":
     elif METHOD == "BYE":
         LINE = (METHOD + " sip:" + USER + " SIP/2.0\r\n")
 
-       # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
-        my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        my_socket.connect((SERVER, int(PROXYPORT)))
-        print("Enviando: " + LINE)
-        my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
-        data = my_socket.recv(1024)
-        print(data.decode('utf-8'))
-        if METHOD == "INVITE":
-            my_socket.send(bytes("ACK sip:" + USER + " SIP/2.0", "utf-8")
-                           + b'\r\n')
-            data = my_socket.recv(1024)
-    """
-    
-        # Contenido que vamos a enviar
-        LINE = (METHOD + " sip:" + USER + " SIP/2.0\r\n")
-    
-    
-    
-
-    
-        print("Enviando: " + LINE)
-        my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
-        data = my_socket.recv(1024)
-        print(data.decode('utf-8'))
-        if METHOD == "INVITE":
-            my_socket.send(bytes("ACK sip:" + USER + " SIP/2.0", "utf-8")
-                           + b'\r\n')
-            data = my_socket.recv(1024)
-        print("Fin.")
-    """
+    try:      
+        # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
+            my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            my_socket.connect((SERVER, int(PROXYPORT)))
+        
+            print("Enviando: " + LINE)
+            log("Sent to " + SERVER + ":" + PROXYPORT + " " + LINE)
+            my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
+            data = my_socket.recv(1024)  
+            print(data.decode('utf-8'))
+            log("Received from " + SERVER + ":" + PROXYPORT + " " 
+                + data.decode("utf-8"))
+            if METHOD == "INVITE":
+                my_socket.send(bytes("ACK sip:" + USER + " SIP/2.0", "utf-8")
+                               + b'\r\n')
+                data = my_socket.recv(1024)
+    except ConnectionRefusedError:
+        print("No Server listening at " + SERVER + " port " + PROXYPORT)
+        log("Error: No Server listening at " + SERVER + " port " + PROXYPORT)
+    log("Finishing...")
