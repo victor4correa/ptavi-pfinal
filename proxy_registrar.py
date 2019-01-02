@@ -8,10 +8,17 @@ Created on Thu Dec 20 10:49:59 2018
 import socketserver
 import sys
 import os
+import time
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
 
-
+def log(event):
+    event = (" ").join(event.split())
+    tiempo = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
+    linelog = tiempo + " " + event + "\n"
+    with open(PATHLOG, "a") as file_log:
+        file_log.write(linelog)
+        
 class ClientHandler(ContentHandler):
     
     
@@ -42,7 +49,8 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         line = self.rfile.read().decode('utf-8')
         contenido = line.split()
         print("El cliente nos manda " + line)
-
+        log("Received from " + str(self.client_address[0]) + ":" 
+            + str(self.client_address[1])+ " " + line)
         if contenido[0] == "REGISTER":
             if len(contenido) != 4:
                 self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")
@@ -54,14 +62,14 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         elif contenido[0] != ["REGISTER", "INVITE", "BYE", "ACK"]:
             self.wfile.write(b"SIP/2.0 405 Method Not Allowed\r\n\r\n")        
 
-if __name__=="__main__":    
+if __name__=="__main__":
     try:
 
         config_file = sys.argv[1]
 
     except IndexError:
         sys.exit("Usage: python proxy_registrar.py  config")
-
+    
     parser = make_parser()
     cHandler = ClientHandler()
     parser.setContentHandler(cHandler)
@@ -71,9 +79,13 @@ if __name__=="__main__":
 
     PROXYPORT = datosconfig[0][1]["puerto"]
     SERVER = datosconfig[0][1]["name"]
-
-
+    PATHLOG = datosconfig[2][1]["path"]
+    log("Starting proxy...")
     serv = socketserver.UDPServer(('', int(PROXYPORT)), EchoHandler)
     Line = "Server " + SERVER + " listening at port " + PROXYPORT
     print(Line)
-    serv.serve_forever()
+    try:
+        serv.serve_forever()
+    except KeyboardInterrupt:
+        print("Finishing proxy...")
+        log("Finishing proxy...")

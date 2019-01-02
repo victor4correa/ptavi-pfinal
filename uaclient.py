@@ -73,8 +73,8 @@ if __name__=="__main__":
     log("Starting...")
         
     if METHOD == "REGISTER":
-        LINE = (METHOD + " sip:" + USER + " SIP/2.0\r\n" + "Expires:" 
-                + OPTION + "\r\n")
+        LINE = (METHOD + " sip:" + USER + ":" + PORT + " SIP/2.0\r\n" 
+                + "Expires:" + OPTION + "\r\n")
     elif METHOD == "INVITE":
         LINE = (METHOD + " sip:" + OPTION + " SIP/2.0\r\n" 
                 + "Content-Type: application/sdp\r\n\r\nv=0\r\no="
