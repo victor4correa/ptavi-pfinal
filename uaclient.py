@@ -92,10 +92,25 @@ if __name__=="__main__":
             print("Enviando: " + LINE)
             log("Sent to " + SERVER + ":" + PROXYPORT + " " + LINE)
             my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
-            data = my_socket.recv(1024)  
-            print(data.decode('utf-8'))
+            data = my_socket.recv(1024)
+            datos = data.decode('utf-8')
+            print(datos)
+            listadatos = datos.split(" ")
             log("Received from " + SERVER + ":" + PROXYPORT + " " 
                 + data.decode("utf-8"))
+            if METHOD == "REGISTER":
+                if listadatos[1] == "401":
+                    listanonce = listadatos[-1].split('"')
+                    NONCE = listanonce[1]
+                    print(NONCE)
+                    LINE = (METHOD + " sip:" + USER + ":" + PORT 
+                            + " SIP/2.0\r\nExpires:" + OPTION + "\r\n"
+                            + 'Authorization: Digest response="' + NONCE + '"')
+                    my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
+                    print("Enviando: " + LINE)
+                    data = my_socket.recv(1024)
+                    datos = data.decode('utf-8')
+                    print(datos)
             if METHOD == "INVITE":
                 my_socket.send(bytes("ACK sip:" + USER + " SIP/2.0", "utf-8")
                                + b'\r\n')

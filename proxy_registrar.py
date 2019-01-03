@@ -7,8 +7,8 @@ Created on Thu Dec 20 10:49:59 2018
 """
 import socketserver
 import sys
-import os
 import time
+from random import randint
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
 
@@ -45,19 +45,28 @@ class EchoHandler(socketserver.DatagramRequestHandler):
     """Echo server class."""
 
     def handle(self):
-
+        
         line = self.rfile.read().decode('utf-8')
         contenido = line.split()
         print("El cliente nos manda " + line)
         log("Received from " + str(self.client_address[0]) + ":" 
             + str(self.client_address[1])+ " " + line)
         if contenido[0] == "REGISTER":
+            print(len(contenido))
             if len(contenido) != 4:
-                self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")
+                if len(contenido) != 7:
+                    self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")
+                else:
+                    """AQUI REGISTRAMOS AL USUARIO"""
+                    self.wfile.write(b"REGISTRANDO...")
+                    
             else:
-                self.wfile.write(b"Registrando...")
-                
-                
+                if len(contenido) !=7:
+                    NONCE = str(randint(0,999999999999999999999))
+                    self.wfile.write(b"SIP/2.0 401 Unauthorized\r\n"
+                                     + b"WWW Authenticate: Digest nonce="+ b'"'
+                                     + bytes(NONCE, "utf-8") + b'"')
+                    
                 
         elif contenido[0] != ["REGISTER", "INVITE", "BYE", "ACK"]:
             self.wfile.write(b"SIP/2.0 405 Method Not Allowed\r\n\r\n")        
