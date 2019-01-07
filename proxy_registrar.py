@@ -5,6 +5,7 @@ Created on Thu Dec 20 10:49:59 2018
 
 @author: victor4correa
 """
+import socket
 import socketserver
 import sys
 import time
@@ -43,7 +44,7 @@ class ClientHandler(ContentHandler):
 
 class EchoHandler(socketserver.DatagramRequestHandler):
     """Echo server class."""
-
+    database = []
     def handle(self):
         
         line = self.rfile.read().decode('utf-8')
@@ -52,13 +53,38 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         log("Received from " + str(self.client_address[0]) + ":" 
             + str(self.client_address[1])+ " " + line)
         if contenido[0] == "REGISTER":
-            print(len(contenido))
             if len(contenido) != 4:
                 if len(contenido) != 7:
                     self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")
+                    line = "SIP/2.0 400 Bad Request"
+                    log("Sent to " + str(self.client_address[0]) + ":" 
+                        + str(self.client_address[1])+ " " + line)
                 else:
                     """AQUI REGISTRAMOS AL USUARIO"""
                     self.wfile.write(b"REGISTRANDO...")
+                    line = "REGISTRANDO..."
+                    log("Sent to " + str(self.client_address[0]) + ":" 
+                        + str(self.client_address[1])+ " " + line)
+                    user = contenido[1].split(":")[1]
+                    ip = IP
+                    port = contenido[1].split(":")[-1]
+                    tiempo = time.strftime("%Y%m%d%H%M%S",
+                                           time.localtime(time.time()))
+                    expires = contenido[3].split(":")[-1]
+                    
+                    listausuarios = {"user": user,"ip": ip,"port": port,
+                                     "tiempo": tiempo,"expires": expires}
+                    self.database.append([listausuarios])
+                    print(self.database)
+                    if len(self.database) >= 2:
+                        PORTSEND = self.database[1][0]["port"]
+                    
+                        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
+                            my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                            my_socket.connect((IP, int(PORTSEND)))
+                        
+                            my_socket.send(bytes(line, 'utf-8') + b'\r\n')
+
                     
             else:
                 if len(contenido) !=7:
@@ -66,10 +92,17 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     self.wfile.write(b"SIP/2.0 401 Unauthorized\r\n"
                                      + b"WWW Authenticate: Digest nonce="+ b'"'
                                      + bytes(NONCE, "utf-8") + b'"')
-                    
+                    line = "SIP/2.0 401 Unauthorized WWW Authenticate: Digest nonce="
+
+                    log("Sent to " + str(self.client_address[0]) + ":" 
+                        + str(self.client_address[1])+ " " + line + NONCE)
                 
         elif contenido[0] != ["REGISTER", "INVITE", "BYE", "ACK"]:
-            self.wfile.write(b"SIP/2.0 405 Method Not Allowed\r\n\r\n")        
+            self.wfile.write(b"SIP/2.0 405 Method Not Allowed\r\n\r\n")
+            line = "SIP/2.0 405 Method Not Allowed"
+            log("Sent to " + str(self.client_address[0]) + ":" 
+                        + str(self.client_address[1])+ " " + line)
+
 
 if __name__=="__main__":
     try:
@@ -85,7 +118,7 @@ if __name__=="__main__":
     parser.parse(open(config_file))
     datosconfig = cHandler.get_tags()
     print(datosconfig)
-
+    IP = datosconfig[0][1]["ip"]
     PROXYPORT = datosconfig[0][1]["puerto"]
     SERVER = datosconfig[0][1]["name"]
     PATHLOG = datosconfig[2][1]["path"]

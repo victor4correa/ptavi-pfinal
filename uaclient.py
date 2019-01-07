@@ -108,13 +108,19 @@ if __name__=="__main__":
                             + 'Authorization: Digest response="' + NONCE + '"')
                     my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
                     print("Enviando: " + LINE)
+                    log("Sent to " + SERVER + ":" + PROXYPORT + " " + LINE)
                     data = my_socket.recv(1024)
                     datos = data.decode('utf-8')
                     print(datos)
+                    log("Received from " + SERVER + ":" + PROXYPORT + " " 
+                        + data.decode("utf-8"))
             if METHOD == "INVITE":
-                my_socket.send(bytes("ACK sip:" + USER + " SIP/2.0", "utf-8")
-                               + b'\r\n')
+                my_socket.send(bytes("ACK sip:" + USER + ":" + PORT 
+                                     + b" SIP/2.0", "utf-8") + b'\r\n')
+                log("Sent to " + SERVER + ":" + PROXYPORT + " " + LINE)
                 data = my_socket.recv(1024)
+                log("Received from " + SERVER + ":" + PROXYPORT + " " 
+                    + data.decode("utf-8"))
     except ConnectionRefusedError:
         print("No Server listening at " + SERVER + " port " + PROXYPORT)
         log("Error: No Server listening at " + SERVER + " port " + PROXYPORT)
