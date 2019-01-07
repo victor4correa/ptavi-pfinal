@@ -46,23 +46,23 @@ class EchoHandler(socketserver.DatagramRequestHandler):
     """Echo server class."""
     database = []
     def handle(self):
-        
+        USERPORT = self.client_address[1]
         line = self.rfile.read().decode('utf-8')
         contenido = line.split()
         print("El cliente nos manda " + line)
         log("Received from " + str(self.client_address[0]) + ":" 
-            + str(self.client_address[1])+ " " + line)
+            + str(USERPORT) + " " + line)
         if contenido[0] == "REGISTER":
             if len(contenido) != 4:
                 if len(contenido) != 7:
                     self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")
                     line = "SIP/2.0 400 Bad Request"
                     log("Sent to " + str(self.client_address[0]) + ":" 
-                        + str(self.client_address[1])+ " " + line)
+                        + str(USERPORT)+ " " + line)
                 else:
                     """AQUI REGISTRAMOS AL USUARIO"""
-                    self.wfile.write(b"REGISTRANDO...")
-                    line = "REGISTRANDO..."
+                    self.wfile.write(b"USUARIO REGISTRADO")
+                    line = "USUARIO REGISTRADO"
                     log("Sent to " + str(self.client_address[0]) + ":" 
                         + str(self.client_address[1])+ " " + line)
                     user = contenido[1].split(":")[1]
@@ -75,16 +75,10 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     listausuarios = {"user": user,"ip": ip,"port": port,
                                      "tiempo": tiempo,"expires": expires}
                     self.database.append([listausuarios])
-                    print(self.database)
-                    if len(self.database) >= 2:
-                        PORTSEND = self.database[1][0]["port"]
-                    
-                        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
-                            my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                            my_socket.connect((IP, int(PORTSEND)))
-                        
-                            my_socket.send(bytes(line, 'utf-8') + b'\r\n')
+                    with open("./database.txt", "a") as file_db:
+                        file_db.write(str(listausuarios) + "\n")
 
+                    print("USUARIO REGISTRADO CON EXITO")
                     
             else:
                 if len(contenido) !=7:
@@ -96,7 +90,43 @@ class EchoHandler(socketserver.DatagramRequestHandler):
 
                     log("Sent to " + str(self.client_address[0]) + ":" 
                         + str(self.client_address[1])+ " " + line + NONCE)
-                
+
+        elif contenido[0] == "INVITE":
+            if len(self.database) >= 2:
+                        PORTSEND = self.database[1][0]["port"]
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
+                my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                my_socket.connect((IP, int(PORTSEND)))
+                my_socket.send(bytes(line, 'utf-8') + b'\r\n')
+                data = my_socket.recv(1024)
+                datos = data.decode('utf-8')
+                print(datos)
+            self.wfile.write(bytes(datos,'utf-8'))
+            
+        elif contenido[0] == "ACK":
+            if len(self.database) >= 2:
+                        PORTSEND = self.database[1][0]["port"]
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
+                my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                my_socket.connect((IP, int(PORTSEND)))
+                my_socket.send(bytes(line, 'utf-8') + b'\r\n')
+                data = my_socket.recv(1024)
+                datos = data.decode('utf-8')
+                print(datos)
+            self.wfile.write(bytes(datos,'utf-8'))
+            
+        elif contenido[0] == "BYE":
+            if len(self.database) >= 2:
+                        PORTSEND = self.database[1][0]["port"]
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
+                my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                my_socket.connect((IP, int(PORTSEND)))
+                my_socket.send(bytes(line, 'utf-8') + b'\r\n')
+                data = my_socket.recv(1024)
+                datos = data.decode('utf-8')
+                print(datos)
+            self.wfile.write(bytes(datos,'utf-8'))   
+
         elif contenido[0] != ["REGISTER", "INVITE", "BYE", "ACK"]:
             self.wfile.write(b"SIP/2.0 405 Method Not Allowed\r\n\r\n")
             line = "SIP/2.0 405 Method Not Allowed"

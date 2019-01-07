@@ -115,12 +115,12 @@ if __name__=="__main__":
                     log("Received from " + SERVER + ":" + PROXYPORT + " " 
                         + data.decode("utf-8"))
             if METHOD == "INVITE":
-                my_socket.send(bytes("ACK sip:" + USER + ":" + PORT 
-                                     + b" SIP/2.0", "utf-8") + b'\r\n')
+                LINE = "ACK sip:" + USER + ":" + PORT + " SIP/2.0"
+                my_socket.send(bytes(LINE, "utf-8") + b'\r\n')
                 log("Sent to " + SERVER + ":" + PROXYPORT + " " + LINE)
                 data = my_socket.recv(1024)
                 log("Received from " + SERVER + ":" + PROXYPORT + " " 
-                    + data.decode("utf-8"))
+                + data.decode("utf-8"))
     except ConnectionRefusedError:
         print("No Server listening at " + SERVER + " port " + PROXYPORT)
         log("Error: No Server listening at " + SERVER + " port " + PROXYPORT)
