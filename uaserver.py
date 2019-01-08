@@ -9,7 +9,9 @@ import time
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
 
+
 def log(event):
+    """Funcion que crea un archivo .txt y escribe mensajes de log."""
     event = (" ").join(event.split())
     tiempo = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
     linelog = tiempo + " " + event + "\n"
@@ -18,22 +20,23 @@ def log(event):
 
 
 class ClientHandler(ContentHandler):
-    
-    
+    """Clase manejadora de la configuracion del servidor."""
+
     def __init__(self):
+        """Creacion del diccionario de configuracion."""
         atb_account = {"username": "", "passwd": ""}
         atb_uaserver = {"ip": "", "puerto": ""}
-        atb_rtpaudio = {"puerto":""}
-        atb_regproxy = {"ip":"", "puerto":""}
-        atb_log = {"path":""}
-        atb_audio = {"path":""}
+        atb_rtpaudio = {"puerto": ""}
+        atb_regproxy = {"ip": "", "puerto": ""}
+        atb_log = {"path": ""}
+        atb_audio = {"path": ""}
         self.config = {"account": atb_account, "uaserver": atb_uaserver,
-                       "rtpaudio": atb_rtpaudio, "regproxy": atb_regproxy, 
+                       "rtpaudio": atb_rtpaudio, "regproxy": atb_regproxy,
                        "log": atb_log, "audio": atb_audio}
         self.datosconfig = []
-        
-    def startElement(self, name, attrs):
 
+    def startElement(self, name, attrs):
+        """Inicializacion del diccionario de configuracion."""
         if name in self.config:
             dic = {}
             for atb in self.config[name]:
@@ -41,19 +44,19 @@ class ClientHandler(ContentHandler):
             self.datosconfig.append([name, dic])
 
     def get_tags(self):
-
+        """Devuelve los datos de configuracion dentro del diccionario."""
         return self.datosconfig
+
 
 class EchoHandler(socketserver.DatagramRequestHandler):
     """Echo server class."""
 
     def handle(self):
-
+        """Maneja los codigos de respuesta de la parte servidora."""
         line = self.rfile.read().decode('utf-8')
         contenido = line.split()
         print("El cliente nos manda " + line)
         log("Received from " + SERVER + ":" + PROXYPORT + " " + line)
-
 
         if contenido[0] == "INVITE":
             if len(contenido) != 13:
@@ -71,7 +74,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 log("Sent to " + SERVER + ":" + PROXYPORT + " " + line)
                 self.wfile.write(b"SIP/2.0 200 OK\r\n\r\nContent-Type: "
                                  + b"application/sdp\r\n\r\nv=0\r\no="
-                                 + bytes(userorigin, "utf-8") + b" " 
+                                 + bytes(userorigin, "utf-8") + b" "
                                  + bytes(SERVER, "utf-8")
                                  + b"\r\ns=VictorSession\r\nt=0\r\nm=audio "
                                  + bytes(audport, "utf-8") + b" RTP\r\n")
@@ -79,8 +82,11 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 log("Sent to " + SERVER + ":" + PROXYPORT + " " + line)
 
         elif contenido[0] == "ACK":
+                USER_PORT = contenido[1].split(":")[-1]
                 FILE = "cancion.mp3"
-                os.system("mp32rtp -i 127.0.0.1 -p" + AUDPORT + "< " + FILE)
+                os.system("mp32rtp -i 127.0.0.1 -p" + USER_PORT + "< " + FILE)
+                self.wfile.write(b"Recibiendo archivo multimedia\r\n\r\n")
+                log("Sent to " + SERVER + ":" + PROXYPORT + " " + FILE)
         elif contenido[0] == "BYE":
             if len(contenido) != 3:
                 self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")
@@ -95,8 +101,9 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             self.wfile.write(b"SIP/2.0 405 Method Not Allowed\r\n\r\n")
             line = "SIP/2.0 405 Method Not Allowed"
             log("Sent to " + SERVER + ":" + PROXYPORT + " " + line)
+
+
 if __name__ == "__main__":
-    
     try:
         config_file = sys.argv[1]
     except IndexError:
@@ -107,8 +114,7 @@ if __name__ == "__main__":
     parser.setContentHandler(cHandler)
     parser.parse(open(config_file))
     datosconfig = cHandler.get_tags()
-    print(datosconfig)
-    
+
     PORT = datosconfig[1][1]["puerto"]
     SERVER = datosconfig[1][1]["ip"]
     USER = datosconfig[0][1]["username"]
@@ -124,4 +130,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("Finishing server...")
         log("Finishing...")
-    
