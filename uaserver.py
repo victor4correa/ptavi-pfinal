@@ -93,7 +93,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 line = "SIP/2.0 400 Bad Request"
                 log("Sent to " + SERVER + ":" + PROXYPORT + " " + line)
             else:
-                self.wfile.write(b"Terminando llamada\r\n\r\n")
+                self.wfile.write(b"SIP/2.0 200 OK Terminando llamada\r\n\r\n")
                 line = "Terminando llamada"
                 log("Sent to " + SERVER + ":" + PROXYPORT + " " + line)
 

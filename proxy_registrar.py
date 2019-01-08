@@ -48,6 +48,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
     """Echo server class."""
 
     database = []
+    portsend = [0]
 
     def handle(self):
         """Maneja los codigos de respuesta de la parte servidora."""
@@ -82,7 +83,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     self.database.append([listausuarios])
                     with open("./database.txt", "a") as file_db:
                         file_db.write(str(listausuarios) + "\n")
-
+                    print(self.database)
                     print("USUARIO REGISTRADO CON EXITO")
 
             else:
@@ -97,44 +98,45 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                         + str(self.client_address[1]) + " " + line + NONCE)
 
         elif contenido[0] == "INVITE":
-            if len(self.database) >= 2:
-                        PORTSEND = self.database[1][0]["port"]
+            if contenido[1].split(":")[-1] == self.database[1][0]['user']:
+                self.portsend[0] = self.database[1][0]["port"]
+            elif contenido[1].split(":")[-1] == self.database[0][0]['user']:
+                self.portsend[0] = self.database[0][0]["port"]
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
                 my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                my_socket.connect((IP, int(PORTSEND)))
+                my_socket.connect((IP, int(self.portsend[0])))
                 my_socket.send(bytes(line, 'utf-8') + b'\r\n')
-                log("Sent to " + IP + ":" + PORTSEND + " " + line)
+                log("Sent to " + IP + ":" + self.portsend[0] + " " + line)
                 data = my_socket.recv(1024)
                 datos = data.decode('utf-8')
-                log("Received from " + IP + ":" + PORTSEND + " " + line)
+                log("Received from " + IP + ":" + self.portsend[0] + " "
+                    + line)
                 print(datos)
             self.wfile.write(bytes(datos, 'utf-8'))
 
         elif contenido[0] == "ACK":
-            if len(self.database) >= 2:
-                        PORTSEND = self.database[1][0]["port"]
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
                 my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                my_socket.connect((IP, int(PORTSEND)))
+                my_socket.connect((IP, int(self.portsend[0])))
                 my_socket.send(bytes(line, 'utf-8') + b'\r\n')
-                log("Sent to " + IP + ":" + PORTSEND + " " + line)
+                log("Sent to " + IP + ":" + self.portsend[0] + " " + line)
                 data = my_socket.recv(1024)
                 datos = data.decode('utf-8')
-                log("Received from " + IP + ":" + PORTSEND + " " + line)
+                log("Received from " + IP + ":" + self.portsend[0] + " "
+                    + line)
                 print(datos)
             self.wfile.write(bytes(datos, 'utf-8'))
 
         elif contenido[0] == "BYE":
-            if len(self.database) >= 2:
-                        PORTSEND = self.database[1][0]["port"]
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
                 my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                my_socket.connect((IP, int(PORTSEND)))
+                my_socket.connect((IP, int(self.portsend[0])))
                 my_socket.send(bytes(line, 'utf-8') + b'\r\n')
-                log("Sent to " + IP + ":" + PORTSEND + " " + line)
+                log("Sent to " + IP + ":" + self.portsend[0] + " " + line)
                 data = my_socket.recv(1024)
                 datos = data.decode('utf-8')
-                log("Received from " + IP + ":" + PORTSEND + " " + line)
+                log("Received from " + IP + ":" + self.portsend[0] + " "
+                    + line)
                 print(datos)
             self.wfile.write(bytes(datos, 'utf-8'))
 
