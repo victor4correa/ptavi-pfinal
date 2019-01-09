@@ -72,7 +72,6 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     user = contenido[1].split(":")[1]
                     with open("./passwords.json", "r") as usuarios:
                         reg_user = json.load(usuarios)
-                        print(reg_user)
                         if user in reg_user:
                             password = reg_user[user]
                         else:
@@ -99,6 +98,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                         listausuarios = {"user": user, "ip": ip, "port": port,
                                          "tiempo": tiempo, "expires": expires}
                         self.database.append([listausuarios])
+                        print(self.database)
                         with open("./database.txt", "a") as file_db:
                             file_db.write(str(listausuarios) + "\n")
                         print("USUARIO REGISTRADO CON EXITO")
@@ -168,7 +168,14 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             log("Sent to " + str(self.client_address[0]) + ":"
                 + str(self.client_address[1]) + " " + line)
 
-
+        if len(self.database) >= 1:
+            exp_user = 0.0
+            for i in [0, (len(self.database)-1)]:
+                tiempo_actual = time.time()
+                exp_user = (float(self.database[i][0]['tiempo']) 
+                           + float(self.database[i][0]['expires']))
+                if tiempo_actual >= exp_user:
+                        del self.database[i]
 if __name__ == "__main__":
     try:
 
