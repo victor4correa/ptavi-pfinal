@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """Programa cliente que abre un socket a un servidor."""
-
+import hashlib
 import socket
 import sys
 import time
@@ -71,6 +71,7 @@ if __name__ == "__main__":
     AUDPORT = datosconfig[2][1]["puerto"]
     PROXYPORT = datosconfig[3][1]["puerto"]
     PATHLOG = datosconfig[4][1]["path"]
+    PASSWORD = datosconfig[0][1]["passwd"]
 
     log("Starting...")
 
@@ -104,9 +105,14 @@ if __name__ == "__main__":
                 if listadatos[1] == "401":
                     listanonce = listadatos[-1].split('"')
                     NONCE = listanonce[1]
+                    hashcode = hashlib.md5()
+                    hashcode.update(bytes(PASSWORD, 'utf-8'))
+                    hashcode.update(bytes(NONCE, 'utf-8'))
+                    hashcode.digest
                     LINE = (METHOD + " sip:" + USER + ":" + PORT
                             + " SIP/2.0\r\nExpires:" + OPTION + "\r\n"
-                            + 'Authorization: Digest response="' + NONCE + '"')
+                            + 'Authorization: Digest response="' 
+                            + hashcode.hexdigest() + '"')
                     my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
                     print("Enviando: " + LINE)
                     log("Sent to " + SERVER + ":" + PROXYPORT + " " + LINE)

@@ -5,6 +5,8 @@ import socket
 import socketserver
 import sys
 import time
+import hashlib
+import json
 from random import randint
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
@@ -49,7 +51,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
 
     database = []
     portsend = [0]
-
+    NONCE = str(randint(0, 999999999999999999999))
     def handle(self):
         """Maneja los codigos de respuesta de la parte servidora."""
         USERPORT = self.client_address[1]
@@ -66,36 +68,56 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     log("Sent to " + str(self.client_address[0]) + ":"
                         + str(USERPORT) + " " + line)
                 else:
-                    """AQUI REGISTRAMOS AL USUARIO"""
-                    self.wfile.write(b"USUARIO REGISTRADO")
-                    line = "USUARIO REGISTRADO"
-                    log("Sent to " + str(self.client_address[0]) + ":"
-                        + str(self.client_address[1]) + " " + line)
+                    reg_user = {}
                     user = contenido[1].split(":")[1]
-                    ip = IP
-                    port = contenido[1].split(":")[-1]
-                    tiempo = time.strftime("%Y%m%d%H%M%S",
-                                           time.localtime(time.time()))
-                    expires = contenido[3].split(":")[-1]
-
-                    listausuarios = {"user": user, "ip": ip, "port": port,
-                                     "tiempo": tiempo, "expires": expires}
-                    self.database.append([listausuarios])
-                    with open("./database.txt", "a") as file_db:
-                        file_db.write(str(listausuarios) + "\n")
-                    print(self.database)
-                    print("USUARIO REGISTRADO CON EXITO")
-
-            else:
-                if len(contenido) != 7:
-                    NONCE = str(randint(0, 999999999999999999999))
-                    self.wfile.write(b"SIP/2.0 401 Unauthorized\r\n"
+                    with open("./passwords.json", "r") as usuarios:
+                        reg_user = json.load(usuarios)
+                        print(reg_user)
+                        if user in reg_user:
+                            password = reg_user[user]
+                        else:
+                            self.wfile.write(b"SIP/2.0 404 User Not Found" 
+                                             + b"\r\n\r\n")
+                    hashreceived = contenido[6].split('"')[1]
+                    hashcode = hashlib.md5()
+                    hashcode.update(bytes(password, 'utf-8'))
+                    hashcode.update(bytes(self.NONCE, 'utf-8'))
+                    hashcode.digest
+                    if hashreceived == hashcode.hexdigest():
+                        """AQUI REGISTRAMOS AL USUARIO"""
+                        self.wfile.write(b"USUARIO REGISTRADO")
+                        line = "USUARIO REGISTRADO"
+                        log("Sent to " + str(self.client_address[0]) + ":"
+                            + str(self.client_address[1]) + " " + line)
+                        user = contenido[1].split(":")[1]
+                        ip = IP
+                        port = contenido[1].split(":")[-1]
+                        tiempo = time.strftime("%Y%m%d%H%M%S",
+                                               time.localtime(time.time()))
+                        expires = contenido[3].split(":")[-1]
+    
+                        listausuarios = {"user": user, "ip": ip, "port": port,
+                                         "tiempo": tiempo, "expires": expires}
+                        self.database.append([listausuarios])
+                        with open("./database.txt", "a") as file_db:
+                            file_db.write(str(listausuarios) + "\n")
+                        print("USUARIO REGISTRADO CON EXITO")
+                    else:
+                        self.NONCE = str(randint(0, 999999999999999999999))
+                        self.wfile.write(b"SIP/2.0 401 Unauthorized\r\n"
                                      + b"WWW Authenticate: Digest nonce="
-                                     + b'"' + bytes(NONCE, "utf-8") + b'"')
-                    line = "SIP/2.0 401 Unauthorized WWW Authenticate: Digest nonce="
+                                     + b'"' + bytes(self.NONCE, "utf-8") 
+                                     + b'"')
+            elif len(contenido) == 4:
+                self.wfile.write(b"SIP/2.0 401 Unauthorized\r\n"
+                                 + b"WWW Authenticate: Digest nonce="
+                                 + b'"' + bytes(self.NONCE, "utf-8") 
+                                 + b'"')
+                line = "SIP/2.0 401 Unauthorized WWW Authenticate: Digest nonce="
 
-                    log("Sent to " + str(self.client_address[0]) + ":"
-                        + str(self.client_address[1]) + " " + line + NONCE)
+                log("Sent to " + str(self.client_address[0]) + ":"
+                    + str(self.client_address[1]) + " " + line 
+                    + self.NONCE)
 
         elif contenido[0] == "INVITE":
             if contenido[1].split(":")[-1] == self.database[1][0]['user']:

@@ -50,22 +50,22 @@ class ClientHandler(ContentHandler):
 
 class EchoHandler(socketserver.DatagramRequestHandler):
     """Echo server class."""
-
+    audport = "1111"
     def handle(self):
         """Maneja los codigos de respuesta de la parte servidora."""
         line = self.rfile.read().decode('utf-8')
         contenido = line.split()
         print("El cliente nos manda " + line)
         log("Received from " + SERVER + ":" + PROXYPORT + " " + line)
-
+        
         if contenido[0] == "INVITE":
+            self.audport = contenido[11]
             if len(contenido) != 13:
                 self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")
                 line = "SIP/2.0 400 Bad Request\r\n\r\n"
                 log("Sent to " + SERVER + ":" + PROXYPORT + " " + line)
             else:
                 userorigin = contenido[6].split("=")[-1]
-                audport = contenido[11]
                 self.wfile.write(b"SIP/2.0 100 Trying\r\n\r\n")
                 line = "SIP/2.0 100 Trying"
                 log("Sent to " + SERVER + ":" + PROXYPORT + " " + line)
@@ -77,14 +77,13 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                                  + bytes(userorigin, "utf-8") + b" "
                                  + bytes(SERVER, "utf-8")
                                  + b"\r\ns=VictorSession\r\nt=0\r\nm=audio "
-                                 + bytes(audport, "utf-8") + b" RTP\r\n")
+                                 + bytes(self.audport, "utf-8") + b" RTP\r\n")
                 line = "SIP/2.0 200 OK"
                 log("Sent to " + SERVER + ":" + PROXYPORT + " " + line)
 
         elif contenido[0] == "ACK":
-                USER_PORT = contenido[1].split(":")[-1]
                 FILE = "cancion.mp3"
-                os.system("mp32rtp -i 127.0.0.1 -p" + USER_PORT + "< " + FILE)
+                os.system("mp32rtp -i 127.0.0.1 -p" + self.audport + "< " + FILE)
                 self.wfile.write(b"Recibiendo archivo multimedia\r\n\r\n")
                 log("Sent to " + SERVER + ":" + PROXYPORT + " " + FILE)
         elif contenido[0] == "BYE":
