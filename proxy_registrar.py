@@ -71,7 +71,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 else:
                     reg_user = {}
                     user = contenido[1].split(":")[1]
-                    with open("./passwords.json", "r") as usuarios:
+                    with open("./passwords", "r") as usuarios:
                         reg_user = json.load(usuarios)
                         if user in reg_user:
                             password = reg_user[user]
