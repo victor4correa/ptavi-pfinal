@@ -111,7 +111,7 @@ if __name__ == "__main__":
                     hashcode.digest
                     LINE = (METHOD + " sip:" + USER + ":" + PORT
                             + " SIP/2.0\r\nExpires:" + OPTION + "\r\n"
-                            + 'Authorization: Digest response="' 
+                            + 'Authorization: Digest response="'
                             + hashcode.hexdigest() + '"')
                     my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
                     print("Enviando: " + LINE)

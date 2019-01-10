@@ -52,6 +52,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
     database = []
     portsend = [0]
     NONCE = str(randint(0, 999999999999999999999))
+
     def handle(self):
         """Maneja los codigos de respuesta de la parte servidora."""
         USERPORT = self.client_address[1]
@@ -75,7 +76,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                         if user in reg_user:
                             password = reg_user[user]
                         else:
-                            self.wfile.write(b"SIP/2.0 404 User Not Found" 
+                            self.wfile.write(b"SIP/2.0 404 User Not Found"
                                              + b"\r\n\r\n")
                     hashreceived = contenido[6].split('"')[1]
                     hashcode = hashlib.md5()
@@ -94,7 +95,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                         tiempo = time.strftime("%Y%m%d%H%M%S",
                                                time.localtime(time.time()))
                         expires = contenido[3].split(":")[-1]
-    
+
                         listausuarios = {"user": user, "ip": ip, "port": port,
                                          "tiempo": tiempo, "expires": expires}
                         self.database.append([listausuarios])
@@ -105,36 +106,46 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     else:
                         self.NONCE = str(randint(0, 999999999999999999999))
                         self.wfile.write(b"SIP/2.0 401 Unauthorized\r\n"
-                                     + b"WWW Authenticate: Digest nonce="
-                                     + b'"' + bytes(self.NONCE, "utf-8") 
-                                     + b'"')
+                                         + b"WWW Authenticate: Digest nonce="
+                                         + b'"' + bytes(self.NONCE, "utf-8")
+                                         + b'"')
             elif len(contenido) == 4:
                 self.wfile.write(b"SIP/2.0 401 Unauthorized\r\n"
                                  + b"WWW Authenticate: Digest nonce="
-                                 + b'"' + bytes(self.NONCE, "utf-8") 
+                                 + b'"' + bytes(self.NONCE, "utf-8")
                                  + b'"')
-                line = "SIP/2.0 401 Unauthorized WWW Authenticate: Digest nonce="
+                line = "SIP/2.0 401 Unauthorized WWWAuthenticate:Digest nonce="
 
                 log("Sent to " + str(self.client_address[0]) + ":"
-                    + str(self.client_address[1]) + " " + line 
+                    + str(self.client_address[1]) + " " + line
                     + self.NONCE)
 
         elif contenido[0] == "INVITE":
-            if contenido[1].split(":")[-1] == self.database[1][0]['user']:
-                self.portsend[0] = self.database[1][0]["port"]
-            elif contenido[1].split(":")[-1] == self.database[0][0]['user']:
-                self.portsend[0] = self.database[0][0]["port"]
-            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
-                my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                my_socket.connect((IP, int(self.portsend[0])))
-                my_socket.send(bytes(line, 'utf-8') + b'\r\n')
-                log("Sent to " + IP + ":" + self.portsend[0] + " " + line)
-                data = my_socket.recv(1024)
-                datos = data.decode('utf-8')
-                log("Received from " + IP + ":" + self.portsend[0] + " "
-                    + line)
-                print(datos)
-            self.wfile.write(bytes(datos, 'utf-8'))
+            try:
+                user1 = self.database[1][0]['user']
+                user2 = self.database[0][0]['user']
+                if contenido[1].split(":")[-1] == user1:
+                    self.portsend[0] = self.database[1][0]["port"]
+                elif contenido[1].split(":")[-1] == user2:
+                    self.portsend[0] = self.database[0][0]["port"]
+                with socket.socket(socket.AF_INET,
+                                   socket.SOCK_DGRAM) as my_socket:
+                    my_socket.setsockopt(socket.SOL_SOCKET,
+                                         socket.SO_REUSEADDR, 1)
+                    my_socket.connect((IP, int(self.portsend[0])))
+                    my_socket.send(bytes(line, 'utf-8') + b'\r\n')
+                    log("Sent to " + IP + ":" + self.portsend[0] + " " + line)
+                    data = my_socket.recv(1024)
+                    datos = data.decode('utf-8')
+                    log("Received from " + IP + ":" + self.portsend[0] + " "
+                        + line)
+                    print(datos)
+                self.wfile.write(bytes(datos, 'utf-8'))
+            except IndexError:
+                line = "SIP/2.0 404 User Not Found\r\n\r\n"
+                log("Sent to " + IP + ":" + str(self.portsend[0]) + " " + line)
+                self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
+                print("SIP/2.0 404 User Not Found")
 
         elif contenido[0] == "ACK":
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
@@ -172,10 +183,13 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             exp_user = 0.0
             for i in [0, (len(self.database)-1)]:
                 tiempo_actual = time.time()
-                exp_user = (float(self.database[i][0]['tiempo']) 
-                           + float(self.database[i][0]['expires']))
+                exp_user = (float(self.database[i][0]['tiempo'])
+                            + float(self.database[i][0]['expires']))
                 if tiempo_actual >= exp_user:
+                        print(self.database[i][0]['user'] + "ha expirado...")
                         del self.database[i]
+
+
 if __name__ == "__main__":
     try:
 

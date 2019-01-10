@@ -50,14 +50,16 @@ class ClientHandler(ContentHandler):
 
 class EchoHandler(socketserver.DatagramRequestHandler):
     """Echo server class."""
+
     audport = "1111"
+
     def handle(self):
         """Maneja los codigos de respuesta de la parte servidora."""
         line = self.rfile.read().decode('utf-8')
         contenido = line.split()
         print("El cliente nos manda " + line)
         log("Received from " + SERVER + ":" + PROXYPORT + " " + line)
-        
+
         if contenido[0] == "INVITE":
             self.audport = contenido[11]
             if len(contenido) != 13:
@@ -83,7 +85,8 @@ class EchoHandler(socketserver.DatagramRequestHandler):
 
         elif contenido[0] == "ACK":
                 FILE = "cancion.mp3"
-                os.system("mp32rtp -i 127.0.0.1 -p" + self.audport + "< " + FILE)
+                os.system("mp32rtp -i 127.0.0.1 -p" + self.audport + "< "
+                          + FILE)
                 self.wfile.write(b"Recibiendo archivo multimedia\r\n\r\n")
                 log("Sent to " + SERVER + ":" + PROXYPORT + " " + FILE)
         elif contenido[0] == "BYE":
