@@ -85,24 +85,32 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     hashcode.digest
                     if hashreceived == hashcode.hexdigest():
                         """AQUI REGISTRAMOS AL USUARIO"""
-                        self.wfile.write(b"SIP/2.0 200 OK USUARIO REGISTRADO")
-                        line = "USUARIO REGISTRADO"
-                        log("Sent to " + str(self.client_address[0]) + ":"
-                            + str(self.client_address[1]) + " " + line)
-                        user = contenido[1].split(":")[1]
-                        ip = IP
-                        port = contenido[1].split(":")[-1]
-                        tiempo = time.strftime("%Y%m%d%H%M%S",
-                                               time.localtime(time.time()))
-                        expires = contenido[3].split(":")[-1]
+                        if contenido[3].split(":")[-1] == "0":
+                            line = "SIP/2.0 200 OK USUARIO BORRADO"
+                            self.wfile.write(bytes(line, 'utf-8'))
+                            log("Sent to " + str(self.client_address[0]) + ":"
+                                + str(self.client_address[1]) + " " + line)
+                        else:
+                            line = "SIP/2.0 200 OK USUARIO REGISTRADO"
+                            self.wfile.write(bytes(line, 'utf-8'))
+                            line = "USUARIO REGISTRADO"
+                            log("Sent to " + str(self.client_address[0]) + ":"
+                                + str(self.client_address[1]) + " " + line)
+                            user = contenido[1].split(":")[1]
+                            ip = IP
+                            port = contenido[1].split(":")[-1]
+                            tiempo = time.strftime("%Y%m%d%H%M%S",
+                                                   time.localtime(time.time()))
+                            expires = contenido[3].split(":")[-1]
 
-                        listausuarios = {"user": user, "ip": ip, "port": port,
-                                         "tiempo": tiempo, "expires": expires}
-                        self.database.append([listausuarios])
-                        print(self.database)
-                        with open("./database.txt", "a") as file_db:
-                            file_db.write(str(listausuarios) + "\n")
-                        print("USUARIO REGISTRADO CON EXITO")
+                            listausuarios = {"user": user, "ip": ip,
+                                             "port": port, "tiempo": tiempo,
+                                             "expires": expires}
+                            self.database.append([listausuarios])
+                            print(self.database)
+                            with open("./database.txt", "a") as file_db:
+                                file_db.write(str(listausuarios) + "\n")
+                            print("USUARIO REGISTRADO CON EXITO")
                     else:
                         self.NONCE = str(randint(0, 999999999999999999999))
                         self.wfile.write(b"SIP/2.0 401 Unauthorized\r\n"
