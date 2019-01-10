@@ -85,7 +85,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     hashcode.digest
                     if hashreceived == hashcode.hexdigest():
                         """AQUI REGISTRAMOS AL USUARIO"""
-                        self.wfile.write(b"USUARIO REGISTRADO")
+                        self.wfile.write(b"SIP/2.0 200 OK USUARIO REGISTRADO")
                         line = "USUARIO REGISTRADO"
                         log("Sent to " + str(self.client_address[0]) + ":"
                             + str(self.client_address[1]) + " " + line)
@@ -108,12 +108,12 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                         self.wfile.write(b"SIP/2.0 401 Unauthorized\r\n"
                                          + b"WWW Authenticate: Digest nonce="
                                          + b'"' + bytes(self.NONCE, "utf-8")
-                                         + b'"')
+                                         + b'"\r\n\r\n')
             elif len(contenido) == 4:
                 self.wfile.write(b"SIP/2.0 401 Unauthorized\r\n"
                                  + b"WWW Authenticate: Digest nonce="
                                  + b'"' + bytes(self.NONCE, "utf-8")
-                                 + b'"')
+                                 + b'"\r\n\r\n')
                 line = "SIP/2.0 401 Unauthorized WWWAuthenticate:Digest nonce="
 
                 log("Sent to " + str(self.client_address[0]) + ":"
